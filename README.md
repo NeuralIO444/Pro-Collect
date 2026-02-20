@@ -1,7 +1,7 @@
 # Pro-Collect
-![Pro-Collect Banner](ProCollectBanner.png)
-
 A More advanced After Effects Project Collector
+
+![Pro-Collect Banner](ProCollectBanner.png)
 
 ## Version 4 (Modular)
 `ProCollect_04.jsx` is the main entry point for the script. It uses a modular architecture to separate concerns, making the codebase easier to maintain.
