@@ -1,4 +1,6 @@
 # Pro-Collect
+![Pro-Collect Banner](ProCollectBanner.png)
+
 A More advanced After Effects Project Collector
 
 ## Version 4 (Modular)
