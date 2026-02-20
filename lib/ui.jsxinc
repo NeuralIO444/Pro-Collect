@@ -1,0 +1,138 @@
+//
+// ProCollect_UI.jsxinc
+//
+
+var ProCollect_UI = (function () {
+
+    function showReportDialog(title, text) {
+        var w = new Window("dialog", title);
+        w.orientation = "column";
+        w.alignChildren = ["fill", "top"];
+        w.margins = 12;
+        w.spacing = 8;
+        w.add("statictext", undefined, "Summary (read-only):");
+        var box = w.add("edittext", undefined, text, { multiline: true, scrolling: true, readonly: true });
+        box.preferredSize = [600, 340];
+        var row = w.add("group");
+        row.orientation = "row";
+        row.alignment = "right";
+        var saveBtn = row.add("button", undefined, "Save Report...");
+        var closeBtn = row.add("button", undefined, "Close");
+        saveBtn.onClick = function () {
+            var defaultFile = File(Folder.desktop.fsName + "/AE_MoveComps_Report.txt");
+            var file = defaultFile.saveDlg("Save report as", "*.txt");
+            if (!file) return;
+            try {
+                if (file.exists) file.remove();
+                if (file.open("w")) {
+                    file.write(text);
+                    file.close();
+                    alert("Report saved:\n" + file.fsName);
+                } else {
+                    alert("Could not open file for writing.");
+                }
+            } catch (e) {
+                alert("Save failed: " + e.toString());
+            }
+        };
+        closeBtn.onClick = function () { w.close(); };
+        w.center();
+        w.show();
+    }
+
+    function buildDialog() {
+        var dlg = new Window("dialog", "Move Comps");
+        dlg.orientation = "column";
+        dlg.alignChildren = ["fill", "top"];
+        dlg.margins = 15;
+        dlg.spacing = 10;
+
+        // --- Banner Image ---
+        var uiScriptPath = $.fileName;
+        var uiScriptFolder = new File(uiScriptPath).parent;
+        // The $.fileName here points to ui.jsxinc inside the lib folder.
+        // The parent of the lib folder is the main script folder where the image is.
+        var rootFolder = uiScriptFolder.parent;
+        var logoFile = new File(rootFolder.fsName + "/ProCollectBanner.png");
+        if (logoFile.exists) {
+            var imgGroup = dlg.add("group");
+            imgGroup.alignment = ["center", "top"];
+            imgGroup.add("image", undefined, logoFile);
+        }
+
+        dlg.add("statictext", undefined, "Paste list of composition names (one per line):");
+        var input = dlg.add("edittext", undefined, "", { multiline: true, scrolling: true });
+        input.preferredSize = [520, 240];
+
+        var optsPanel = dlg.add("panel", undefined, "Options");
+        optsPanel.orientation = "column";
+        optsPanel.alignChildren = ["left", "top"];
+        optsPanel.margins = 10;
+
+        var chkCase   = optsPanel.add("checkbox", undefined, "Case-insensitive match");
+        chkCase.value = false;
+
+        var chkStrip  = optsPanel.add("checkbox", undefined, "Strip common file extensions (.mov, .mp4, .tif, .png, .jpg, .psd, .exr, etc.) and trailing \".new.\"");
+        chkStrip.value = true;
+
+        var chkSelect = optsPanel.add("checkbox", undefined, "Select moved comps after run");
+        chkSelect.value = true;
+
+        // --- New: Destination options ---
+        var chkUseDest = optsPanel.add("checkbox", undefined, "Move to a destination folder (instead of Project Root)");
+        chkUseDest.value = false;
+
+        var destGroup = optsPanel.add("group");
+        destGroup.orientation = "column";
+        destGroup.alignChildren = ["left", "top"];
+
+        var destRow1 = destGroup.add("group");
+        destRow1.orientation = "row";
+        destRow1.add("statictext", undefined, "Destination path (e.g., Delivery/VFX):");
+        var destEdit = destRow1.add("edittext", undefined, "");
+        destEdit.characters = 30;
+        destEdit.enabled = chkUseDest.value;
+
+        var chkCreate = destGroup.add("checkbox", undefined, "Create destination folder path if missing");
+        chkCreate.value = true;
+        chkCreate.enabled = chkUseDest.value;
+
+        // --- New: Collapse Project panel after run ---
+        var chkCollapse = optsPanel.add("checkbox", undefined, "Collapse all folders in Project panel after run (best-effort)");
+        chkCollapse.value = true;
+
+        // Enable/disable destination controls
+        chkUseDest.onClick = function () {
+            destEdit.enabled = chkUseDest.value;
+            chkCreate.enabled = chkUseDest.value;
+        };
+
+        var btnRow = dlg.add("group");
+        btnRow.orientation = "row";
+        btnRow.alignment = "right";
+        var okBtn = btnRow.add("button", undefined, "OK");
+        var cancelBtn = btnRow.add("button", undefined, "Cancel");
+
+        return {
+            window: dlg,
+            refs: {
+                input: input,
+                chkCase: chkCase,
+                chkStrip: chkStrip,
+                chkSelect: chkSelect,
+                chkUseDest: chkUseDest,
+                destEdit: destEdit,
+                chkCreate: chkCreate,
+                chkCollapse: chkCollapse,
+                okBtn: okBtn,
+                cancelBtn: cancelBtn
+            }
+        };
+    }
+
+    return {
+        buildDialog: buildDialog,
+        showReportDialog: showReportDialog
+    };
+
+})();

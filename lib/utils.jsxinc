@@ -1,0 +1,62 @@
+//
+// ProCollect_Utils.jsxinc
+//
+
+var ProCollect_Utils = (function () {
+
+    function trim(s) { return s.replace(/^\s+|\s+$/g, ""); }
+
+    function normalizeLines(raw) {
+        return raw.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+    }
+
+    function endsWith(str, suffix) {
+        var idx = str.length - suffix.length;
+        return idx >= 0 && str.indexOf(suffix, idx) === idx;
+    }
+
+    function parseNames(raw, opts) {
+        // Dedup by lowercase key
+        var lines = normalizeLines(raw);
+        var out = [];
+        var seen = {};
+        var exts = [".mov",".mp4",".mxf",".wav",".aif",".aiff",".tif",".tiff",".png",".jpg",".jpeg",".psd",".exr",".gif"];
+        var i, n, key, ln, ext;
+        for (i = 0; i < lines.length; i++) {
+            n = trim(lines[i]);
+            if (!n) continue;
+            if (opts.stripExt) {
+                ln = n.toLowerCase();
+                // strip extensions
+                for (var e = 0; e < exts.length; e++) {
+                    ext = exts[e];
+                    if (endsWith(ln, ext)) {
+                        n = n.substring(0, n.length - ext.length);
+                        ln = n.toLowerCase();
+                        break;
+                    }
+                }
+                // special case: trailing ".new."
+                if (endsWith(ln, ".new.")) {
+                    n = n.substring(0, n.length - 5);
+                    ln = n.toLowerCase();
+                }
+            }
+            key = n.toLowerCase();
+            if (!seen[key]) {
+                out.push(n);
+                seen[key] = true;
+            }
+        }
+        return out;
+    }
+
+    // Return the public methods/properties
+    return {
+        trim: trim,
+        normalizeLines: normalizeLines,
+        endsWith: endsWith,
+        parseNames: parseNames
+    };
+
+})();

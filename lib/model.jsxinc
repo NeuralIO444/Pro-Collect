@@ -1,0 +1,102 @@
+//
+// ProCollect_Model.jsxinc
+//
+
+var ProCollect_Model = (function () {
+
+    // Helper references (will be provided by the app)
+    var project;
+    var rootFolder;
+
+    function init(proj) {
+        project = proj;
+        if (project) {
+            rootFolder = project.rootFolder;
+        }
+    }
+
+    function buildCompIndex() {
+        // Return both exact and lowercase maps for fast lookup
+        var exact = {}; // name -> [CompItem...]
+        var lower = {}; // lname -> [CompItem...]
+        var all = [];
+        for (var i = 1; i <= project.numItems; i++) {
+            var it = project.item(i);
+            if (it instanceof CompItem) {
+                all.push(it);
+                var nm = it.name;
+                var ln = nm.toLowerCase();
+                if (!exact[nm]) exact[nm] = [];
+                exact[nm].push(it);
+                if (!lower[ln]) lower[ln] = [];
+                lower[ln].push(it);
+            }
+        }
+        return { all: all, exact: exact, lower: lower };
+    }
+
+    // --- Destination helpers (folder lookup/creation using nested paths like "Parent/Child") ---
+    function findChildFolderByName(parentFolderItem, name) {
+        // Safe and simple: scan the whole project and match by parentFolder & name
+        for (var i = 1; i <= project.numItems; i++) {
+            var it = project.item(i);
+            if (it instanceof FolderItem && it.parentFolder === parentFolderItem && it.name === name) {
+                return it;
+            }
+        }
+        return null;
+    }
+
+    function createFolderChild(parentFolderItem, name) {
+        var fol = project.items.addFolder(name);
+        fol.parentFolder = parentFolderItem;
+        return fol;
+    }
+
+    function resolveDestinationFolder(pathStr, createIfMissing) {
+        // Empty path -> root
+        if (!pathStr || !ProCollect_Utils.trim(pathStr)) return rootFolder;
+
+        var path = pathStr.replace(/\\/g, "/").split("/");
+        var parent = rootFolder;
+        for (var i = 0; i < path.length; i++) {
+            var seg = ProCollect_Utils.trim(path[i]);
+            if (!seg) continue;
+            var existing = findChildFolderByName(parent, seg);
+            if (!existing) {
+                if (!createIfMissing) return null;
+                existing = createFolderChild(parent, seg);
+            }
+            parent = existing;
+        }
+        return parent;
+    }
+
+    function folderPathString(folder) {
+        if (folder === rootFolder) return "Project Root";
+        var names = [];
+        var f = folder;
+        while (f && f !== rootFolder) {
+            names.unshift(f.name);
+            f = f.parentFolder;
+        }
+        return names.join("/");
+    }
+
+    // --- Best-effort collapse of Project panel folders ---
+    function collapseProjectFoldersBestEffort() {
+        var candidateIds = []; // e.g., [12345];
+        for (var i = 0; i < candidateIds.length; i++) {
+            try { app.executeCommand(candidateIds[i]); } catch (e) { /* ignore */ }
+        }
+    }
+
+    return {
+        init: init,
+        buildCompIndex: buildCompIndex,
+        resolveDestinationFolder: resolveDestinationFolder,
+        folderPathString: folderPathString,
+        collapseProjectFoldersBestEffort: collapseProjectFoldersBestEffort
+    };
+
+})();
